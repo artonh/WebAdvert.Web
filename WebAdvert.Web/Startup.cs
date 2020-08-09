@@ -40,6 +40,10 @@ namespace WebAdvert.Web
                     RequireUppercase = false
                 };
             });
+
+            services.ConfigureApplicationCookie(options => {
+                options.LoginPath = "Accounts/Login";
+            });
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 
@@ -62,7 +66,7 @@ namespace WebAdvert.Web
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Accounts}/{action=Signup}/{id?}");
+                    template: "{controller=Accounts}/{action=Login}/{id?}");
             });
         }
     }

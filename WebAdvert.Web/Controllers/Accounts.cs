@@ -44,24 +44,14 @@ namespace WebAdvert.Web.Controllers
                     return View(model);
                 }
 
-                try
+                user.Attributes.Add(CognitoAttribute.Name.ToString(), model.Email);
+                var createdUser = await _userManager.CreateAsync(user, model.Password).ConfigureAwait(false);
+
+                if (createdUser.Succeeded)
                 {
-                    user.Attributes.Add(CognitoAttribute.Name.ToString(), model.Email);
-                    var createdUser = await _userManager.CreateAsync(user, model.Password).ConfigureAwait(false);
-
-                    if (createdUser.Succeeded)
-                    {
-                        return RedirectToAction("Confirm");
-                    }
+                    return RedirectToAction("Confirm");
                 }
-                catch (Exception e)
-                {
-                    return View();
-                }
-
-
             }
-
             return View();
         }
 
@@ -84,7 +74,8 @@ namespace WebAdvert.Web.Controllers
                     return View(model);
                 }
 
-                var result = await _userManager.ConfirmEmailAsync(user, model.Code).ConfigureAwait(false);
+                var result = await (_userManager as CognitoUserManager<CognitoUser>).ConfirmEmailAsync(user, model.Code).ConfigureAwait(false);
+                //var result = await (_userManager as CognitoUserManager<CognitoUser>).ConfirmEmailAsync(user, model.Code, true).ConfigureAwait(false);
                 if (result.Succeeded)
                 {
                     return RedirectToAction("Index", "Home");
@@ -102,6 +93,33 @@ namespace WebAdvert.Web.Controllers
             return View(model);
         }
 
+
+        [HttpGet]
+        public async Task<IActionResult> Login(LoginModel model)
+        {
+            return View(model);
+        }
+
+        [HttpPost]
+        [ActionName("Login")]
+        public async Task<IActionResult> LoginPost(LoginModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RemberMe, false).ConfigureAwait(false);
+
+                if (result.Succeeded)
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    ModelState.AddModelError("LoginError", "Email and password do not match");
+                }
+            }
+
+            return View("Login", model);
+        }
 
     }
 }
